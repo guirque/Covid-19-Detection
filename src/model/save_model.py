@@ -5,11 +5,13 @@ import os
 
 def save_model(model:nn.Module, optimizer:optim.Optimizer):
     date = datetime.now()
+    file_name = date.strftime('model_%y_%d_%m_%H_%M.pth')
     save(
         {
             'model': model.state_dict(),
             'optimizer': optimizer.state_dict(),
             'date': date
-          }, os.path.join(SAVE_PATH, date.strftime('model_%y_%d_%m_%H_%M.pth')))
+          }, os.path.join(SAVE_PATH, file_name))
+    print(f'Saved file {file_name} at {SAVE_PATH}')
     
 # Datetime reference: https://www.w3schools.com/python/python_datetime.asp
