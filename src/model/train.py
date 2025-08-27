@@ -13,7 +13,11 @@ def load_dataset(dataset):
 
     return iter(loader)
 
-def train(model, num_epochs, num_batches, device, optimizer, scheduler, dataset, loss, num_imgs):
+def train(model:torch.nn.Module, num_epochs, num_batches, device, optimizer, scheduler, dataset, loss, num_imgs):
+
+    checkpoint = None
+    checkpoint_accuracy = 0
+
     # Loop
     for epoch in range(num_epochs):
         accuracy = 0
@@ -46,3 +50,10 @@ def train(model, num_epochs, num_batches, device, optimizer, scheduler, dataset,
             except StopIteration:
                 print(f'Exception Encountered: batch {i}/{num_batches} in epoch {epoch}')
         print(f"Epoch {epoch} | Accuracy: {(accuracy*100/num_imgs):.4f}%")
+        if accuracy > checkpoint_accuracy:
+            checkpoint_accuracy = accuracy
+            checkpoint = model.state_dict()
+    
+    # Return to last checkpoint
+    model.load_state_dict(checkpoint)
+    print(f"Switching to model with accuracy of {(checkpoint_accuracy*100/num_imgs):.4f}%")
