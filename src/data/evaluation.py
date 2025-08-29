@@ -5,6 +5,12 @@ import numpy as np
 from tqdm import tqdm
 from math import ceil
 
+from glob import glob
+from setup import DATA_PATH, IMAGE_HEIGHT, IMAGE_WIDTH
+import os
+from torchvision import transforms
+from model.run_img import run_img
+
 def evaluate_model(model: torch.nn.Module, test_data, batch_size):
 
     model = model.eval()
@@ -46,12 +52,10 @@ def evaluate_model(model: torch.nn.Module, test_data, batch_size):
     print(confusion_matrix(labels_all, predicted_classes, labels=[0, 1, 2]))
 
 def evaluate_single(model:torch.nn.Module, classes_list:list, device):
-    from glob import glob
-    from setup import DATA_PATH, IMAGE_HEIGHT, IMAGE_WIDTH
-    import os
-    from PIL import Image
-    from torchvision.transforms.functional import pil_to_tensor
-    from torchvision import transforms
+    """
+        Performs an evaluation of the model running it against every image in a folder, individually.
+        Prints the accuracy obtained.
+    """
 
     model = model.eval()
     model.to(device)
@@ -64,18 +68,9 @@ def evaluate_single(model:torch.nn.Module, classes_list:list, device):
 
         for img in tqdm(imgs, desc=f'Testing Against Images of Class {class_str}'):
             num_elements += 1
-            pil_image = Image.open(img)
-            pil_image = pil_image.convert('RGB')
-
             transform = transforms.Compose([transforms.Resize(size=(IMAGE_WIDTH, IMAGE_HEIGHT)), transforms.ToTensor(), transforms.Normalize([0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])])
-            model_input = transform(pil_image).float().unsqueeze(0)
+            predicted_class, _ = run_img(model, img, device, transform)
 
-            model_input = model_input.to(device=device)
-
-            result = model(model_input)
-
-            probabilities = torch.softmax(result, dim=1)
-            predicted_class = torch.argmax(probabilities).item()
             if predicted_class == class_num:
                 accuracy += 1
         
