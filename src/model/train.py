@@ -13,7 +13,7 @@ def load_dataset(dataset):
 
     return iter(loader)
 
-def train(model:torch.nn.Module, num_epochs, num_batches, device, optimizer, scheduler, dataset, loss, num_imgs):
+def train(model:torch.nn.Module, num_epochs, num_batches, device, optimizer, scheduler, dataset, loss, num_imgs, verbose=True):
 
     checkpoint = None
     checkpoint_accuracy = 0
@@ -25,7 +25,7 @@ def train(model:torch.nn.Module, num_epochs, num_batches, device, optimizer, sch
         #iterable_ds = iter(dataloader) # reinitialize batches whenever we run a new epoch
         iterable_ds = load_dataset(dataset)
 
-        for i in tqdm(range(num_batches), desc=f"Epoch {epoch}"):
+        for i in tqdm(range(num_batches), desc=f"Epoch {epoch}", disable=not verbose):
             try:
                 batch, labels = next(iterable_ds) # we get the images (batch) and corresponding labels. That's returned by __getitem__, it seems.
                 batch = batch.to(device=device)
@@ -49,11 +49,15 @@ def train(model:torch.nn.Module, num_epochs, num_batches, device, optimizer, sch
 
             except StopIteration:
                 print(f'Exception Encountered: batch {i}/{num_batches} in epoch {epoch}')
-        print(f"Epoch {epoch} | Accuracy: {(accuracy*100/num_imgs):.4f}%")
+        if verbose:
+            print(f"Epoch {epoch} | Accuracy: {(accuracy*100/num_imgs):.4f}%")
         if accuracy > checkpoint_accuracy:
             checkpoint_accuracy = accuracy
             checkpoint = model.state_dict()
     
     # Return to last checkpoint
     model.load_state_dict(checkpoint)
-    print(f"Switching to model with accuracy of {(checkpoint_accuracy*100/num_imgs):.4f}%")
+    accuracy_perc = (checkpoint_accuracy*100/num_imgs)
+    if verbose:
+        print(f"Switching to model with accuracy of {accuracy_perc:.4f}%")
+    return accuracy_perc
